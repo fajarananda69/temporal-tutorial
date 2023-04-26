@@ -1,2 +1,7 @@
 go.mod
 go.sum
+
+vendor/
+
+*.mod
+*.sum
