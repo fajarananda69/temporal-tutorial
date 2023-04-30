@@ -34,12 +34,14 @@ func main() {
 	w := worker.New(c, mo.MyTaskQueue2, worker.Options{})
 
 	// register workflow
-	w.RegisterWorkflowWithOptions(wo.MyWorkflow2, workflow.RegisterOptions{
-		Name: "Test Workflow 2",
+	w.RegisterWorkflowWithOptions(wo.CartWorkflow, workflow.RegisterOptions{
+		Name: "Test Cart Workflow",
 	})
 
 	// register activity
-	w.RegisterActivity(ac.MyActivity3)
+	var a ac.Activities
+	w.RegisterActivity(a.Checkout)
+	w.RegisterActivity(a.Payment)
 
 	// Start listening to the Task Queue
 	err = w.Run(worker.InterruptCh())

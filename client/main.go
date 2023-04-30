@@ -6,14 +6,15 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	mo "temporal-tutorial/model"
 	wo "temporal-tutorial/workflow"
 
+	"github.com/segmentio/ksuid"
 	"go.temporal.io/sdk/client"
 )
 
 func main() {
-
 	// Create the client object just once per process
 	c, err := client.Dial(client.Options{
 		HostPort:  client.DefaultHostPort,
@@ -25,43 +26,32 @@ func main() {
 	defer c.Close()
 
 	// Start the Workflow
-	service := os.Args[1]
-	value := os.Args[2:]
+	loop := os.Args[1]
+	value := os.Args[2]
 
+	count, _ := strconv.Atoi(loop)
 	var we client.WorkflowRun
-	if service == "3" {
-		var val1, val2 string
-		if len(value) > 1 {
-			val1 = value[0]
-			val2 = value[1]
-		}
+
+	for i := 0; i < count; i++ {
+		ID := ksuid.New().String()
 		options := client.StartWorkflowOptions{
-			ID:        "my-workflow-2",
-			TaskQueue: mo.MyTaskQueue2,
-		}
-		we, err = c.ExecuteWorkflow(context.Background(), options, wo.MyWorkflow2, service, val1, val2)
-		if err != nil {
-			log.Fatalln("unable to complete Workflow", err)
-		}
-	} else {
-		options := client.StartWorkflowOptions{
-			ID:        "my-workflow-1",
+			ID:        fmt.Sprintf("my-workflow-%s", ID),
 			TaskQueue: mo.MyTaskQueue1,
 		}
-		we, err = c.ExecuteWorkflow(context.Background(), options, wo.MyWorkflow1, service, value[0])
+		we, err = c.ExecuteWorkflow(context.Background(), options, wo.MyWorkflow1, value)
 		if err != nil {
 			log.Fatalln("unable to complete Workflow", err)
 		}
-	}
 
-	// Get the results
-	var greeting mo.Response
-	err = we.Get(context.Background(), &greeting)
-	if err != nil {
-		log.Fatalln("unable to get Workflow result", err)
-	}
+		// Get the results
+		var greeting mo.Response
+		err = we.Get(context.Background(), &greeting)
+		if err != nil {
+			log.Fatalln("unable to get Workflow result", err)
+		}
 
-	printResults(greeting, we.GetID(), we.GetRunID())
+		printResults(greeting, we.GetID(), we.GetRunID())
+	}
 }
 
 func printResults(greeting mo.Response, workflowID, runID string) {
